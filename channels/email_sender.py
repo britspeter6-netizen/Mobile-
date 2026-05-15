@@ -119,7 +119,7 @@ def _send_smtp(to_email: str, subject: str, body: str):
     msg["To"]      = to_email
     msg.attach(MIMEText(body, "plain"))
 
-    with smtplib.SMTP(settings.smtp_host, settings.smtp_port) as server:
+    with smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=10) as server:
         server.starttls()
         server.login(settings.smtp_user, settings.smtp_password)
         server.sendmail(settings.from_email, to_email, msg.as_string())

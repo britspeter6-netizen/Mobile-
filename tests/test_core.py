@@ -25,7 +25,8 @@ def fresh_db():
 @pytest.fixture
 def client():
     from dashboard.app import app
-    return TestClient(app)
+    with TestClient(app) as c:
+        yield c
 
 
 # ── Config ────────────────────────────────────────────────────────────────────
