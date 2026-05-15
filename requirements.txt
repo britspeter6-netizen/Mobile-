@@ -1,0 +1,32 @@
+# Core
+fastapi==0.115.5
+email-validator==2.2.0
+uvicorn[standard]==0.32.1
+pydantic==2.10.3
+pydantic-settings==2.6.1
+
+# Database
+sqlalchemy==2.0.36
+
+# AI providers
+anthropic==0.40.0
+openai==1.57.4
+
+# HTTP client (for WordPress, Gumroad API calls)
+httpx==0.28.1
+
+# Payments
+stripe==11.3.0
+
+# Scheduling
+APScheduler==3.10.4
+
+# Date utilities
+python-dateutil==2.9.0
+
+# Email (stdlib smtplib used, no extra dep needed)
+
+# Dev / testing
+pytest==8.3.4
+pytest-asyncio==0.24.0
+httpx  # already listed, used for TestClient too
