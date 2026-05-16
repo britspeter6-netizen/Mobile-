@@ -41,7 +41,7 @@ from fastapi import (
     Request, Response,
 )
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from pydantic import BaseModel, EmailStr
 
 from core.config import get_settings
@@ -128,9 +128,254 @@ def log_api_call(subscriber_id: int, endpoint: str,
 
 # ── Public routes ─────────────────────────────────────────────────────────────
 
+_LANDING_HTML = """<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PassiveEngine — AI Income Engine, Running 24/7</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    background:#0a0a0f;color:#e8e8f0;line-height:1.6}
+  a{color:#7c6af7;text-decoration:none}
+  .hero{text-align:center;padding:80px 20px 60px;
+    background:linear-gradient(135deg,#0a0a0f 0%,#141428 100%)}
+  .hero h1{font-size:clamp(2rem,5vw,3.5rem);font-weight:800;
+    background:linear-gradient(90deg,#7c6af7,#a855f7);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    margin-bottom:20px}
+  .hero p{font-size:1.2rem;color:#9090b0;max-width:600px;
+    margin:0 auto 40px}
+  .badge{display:inline-block;background:#1e1e3a;border:1px solid #3a3a6a;
+    border-radius:20px;padding:6px 16px;font-size:.85rem;
+    color:#9090b0;margin-bottom:24px}
+  .cta-form{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;
+    max-width:500px;margin:0 auto}
+  .cta-form input{flex:1;min-width:220px;padding:14px 18px;
+    border-radius:8px;border:1px solid #3a3a6a;background:#141428;
+    color:#e8e8f0;font-size:1rem}
+  .btn{padding:14px 28px;border-radius:8px;border:none;cursor:pointer;
+    font-size:1rem;font-weight:600;transition:opacity .2s}
+  .btn-primary{background:linear-gradient(135deg,#7c6af7,#a855f7);
+    color:#fff}
+  .btn-primary:hover{opacity:.9}
+  .msg{margin-top:14px;font-size:.9rem;color:#7c6af7;min-height:22px}
+  .features{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+    gap:24px;max-width:960px;margin:60px auto;padding:0 20px}
+  .card{background:#141428;border:1px solid #2a2a4a;border-radius:12px;
+    padding:28px}
+  .card .icon{font-size:2rem;margin-bottom:12px}
+  .card h3{font-size:1.1rem;margin-bottom:8px;color:#e8e8f0}
+  .card p{color:#7070a0;font-size:.95rem}
+  .pricing{text-align:center;padding:60px 20px;background:#0d0d1a}
+  .pricing h2{font-size:2rem;margin-bottom:12px}
+  .pricing p{color:#9090b0;margin-bottom:48px}
+  .plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+    gap:24px;max-width:860px;margin:0 auto}
+  .plan{background:#141428;border:1px solid #2a2a4a;border-radius:12px;
+    padding:32px 24px;text-align:left}
+  .plan.featured{border-color:#7c6af7;position:relative}
+  .plan.featured::before{content:"Most Popular";position:absolute;top:-12px;
+    left:50%;transform:translateX(-50%);background:#7c6af7;color:#fff;
+    font-size:.75rem;font-weight:700;padding:3px 14px;border-radius:20px}
+  .plan-name{font-size:1rem;color:#9090b0;text-transform:uppercase;
+    letter-spacing:.08em}
+  .plan-price{font-size:2.6rem;font-weight:800;margin:8px 0 4px}
+  .plan-price span{font-size:1rem;font-weight:400;color:#7070a0}
+  .plan ul{list-style:none;margin:20px 0 28px;color:#9090b0;font-size:.95rem}
+  .plan ul li{padding:5px 0}
+  .plan ul li::before{content:"✓  ";color:#7c6af7}
+  .plan .btn{width:100%;text-align:center}
+  .social-proof{max-width:800px;margin:60px auto;padding:0 20px;text-align:center}
+  .social-proof h2{font-size:1.6rem;margin-bottom:32px}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+    gap:20px}
+  .stat{background:#141428;border:1px solid #2a2a4a;border-radius:10px;padding:20px}
+  .stat .num{font-size:2rem;font-weight:800;color:#7c6af7}
+  .stat .label{color:#7070a0;font-size:.85rem;margin-top:4px}
+  footer{text-align:center;padding:40px 20px;color:#5050708;font-size:.85rem;
+    border-top:1px solid #1a1a2e}
+</style>
+</head>
+<body>
+
+<section class="hero">
+  <div class="badge">&#9889; AI-Powered — Zero daily maintenance</div>
+  <h1>Your income engine,<br>running 24/7</h1>
+  <p>PassiveEngine generates SEO content, sells digital products, and earns
+     affiliate commissions — fully automated while you focus on other things.</p>
+  <div class="cta-form">
+    <input type="text" id="fn" placeholder="First name (optional)">
+    <input type="email" id="em" placeholder="Your email address" required>
+    <button class="btn btn-primary" onclick="captureLead()">Get Free AI Toolkit</button>
+  </div>
+  <p class="msg" id="msg"></p>
+</section>
+
+<section class="features">
+  <div class="card">
+    <div class="icon">&#129302;</div>
+    <h3>AI Content API ($29–$199/mo)</h3>
+    <p>Sell access to your content engine. Businesses pay monthly for
+       AI-written blog posts, resumes, email sequences, and social packs.</p>
+  </div>
+  <div class="card">
+    <div class="icon">&#128218;</div>
+    <h3>Digital Downloads</h3>
+    <p>5 pre-built products on Gumroad — prompt packs, email templates,
+       resume bundles. One-time purchases, instant delivery, no inventory.</p>
+  </div>
+  <div class="card">
+    <div class="icon">&#128181;</div>
+    <h3>Affiliate Commissions</h3>
+    <p>Every blog post published has monetized links injected automatically.
+       10+ affiliate programs. Commissions earned while you sleep.</p>
+  </div>
+</section>
+
+<section class="social-proof">
+  <h2>What gets automated for you</h2>
+  <div class="stats">
+    <div class="stat"><div class="num">4/day</div><div class="label">SEO articles auto-published</div></div>
+    <div class="stat"><div class="num">10-day</div><div class="label">Email nurture sequence</div></div>
+    <div class="stat"><div class="num">10+</div><div class="label">Affiliate networks wired in</div></div>
+    <div class="stat"><div class="num">3</div><div class="label">Revenue streams at once</div></div>
+  </div>
+</section>
+
+<section class="pricing">
+  <h2>Simple, transparent pricing</h2>
+  <p>All plans include every content endpoint and full automation. Cancel any time.</p>
+  <div class="plans">
+    <div class="plan">
+      <div class="plan-name">Starter</div>
+      <div class="plan-price">$29<span>/mo</span></div>
+      <ul>
+        <li>500 API calls / month</li>
+        <li>All content endpoints</li>
+        <li>Email support</li>
+      </ul>
+      <button class="btn btn-primary" onclick="startTrial('starter')">Get Started</button>
+    </div>
+    <div class="plan featured">
+      <div class="plan-name">Pro</div>
+      <div class="plan-price">$79<span>/mo</span></div>
+      <ul>
+        <li>2,000 API calls / month</li>
+        <li>All content endpoints</li>
+        <li>Priority support</li>
+        <li>Bulk jobs</li>
+      </ul>
+      <button class="btn btn-primary" onclick="startTrial('pro')">Get Started</button>
+    </div>
+    <div class="plan">
+      <div class="plan-name">Agency</div>
+      <div class="plan-price">$199<span>/mo</span></div>
+      <ul>
+        <li>10,000 API calls / month</li>
+        <li>All content endpoints</li>
+        <li>White-label</li>
+        <li>Team seats + SLA</li>
+      </ul>
+      <button class="btn btn-primary" onclick="startTrial('agency')">Get Started</button>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>&copy; 2026 PassiveEngine &mdash; <a href="/docs">API Docs</a> &mdash; <a href="/pricing">Pricing JSON</a></p>
+</footer>
+
+<script>
+  // Persist referral code from URL so it survives the form submission
+  const params = new URLSearchParams(window.location.search);
+  const ref = params.get('ref') || localStorage.getItem('pe_ref') || '';
+  if (ref) localStorage.setItem('pe_ref', ref);
+
+  async function captureLead() {
+    const email = document.getElementById('em').value.trim();
+    const name  = document.getElementById('fn').value.trim();
+    const msg   = document.getElementById('msg');
+    if (!email) { msg.textContent = 'Please enter your email.'; return; }
+    msg.textContent = 'Sending…';
+    try {
+      const r = await fetch('/leads/capture', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({email, first_name:name,
+          source:'landing_page', referral_code: localStorage.getItem('pe_ref')||''})
+      });
+      const d = await r.json();
+      msg.textContent = d.status==='existing'
+        ? 'You’re already on the list — check your inbox!'
+        : '✓ Check your email for your free AI toolkit!';
+    } catch(e) { msg.textContent = 'Something went wrong — try again.'; }
+  }
+
+  async function startTrial(plan) {
+    const email = document.getElementById('em').value.trim();
+    if (!email) {
+      document.getElementById('msg').textContent = 'Enter your email above first.';
+      document.getElementById('em').focus(); return;
+    }
+    try {
+      const r = await fetch('/subscribe/checkout', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({email, plan})
+      });
+      const d = await r.json();
+      if (d.checkout_url) window.location.href = d.checkout_url;
+      else document.getElementById('msg').textContent = 'Could not start checkout — try again.';
+    } catch(e) {
+      document.getElementById('msg').textContent = 'Something went wrong — try again.';
+    }
+  }
+</script>
+</body>
+</html>"""
+
+_SUCCESS_HTML = """<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Welcome to PassiveEngine!</title>
+<style>
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    background:#0a0a0f;color:#e8e8f0;display:flex;align-items:center;
+    justify-content:center;min-height:100vh;text-align:center;padding:20px}
+  h1{font-size:2.5rem;margin-bottom:16px;
+    background:linear-gradient(90deg,#7c6af7,#a855f7);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  p{color:#9090b0;max-width:480px;margin:0 auto 28px;font-size:1.05rem}
+  .box{background:#141428;border:1px solid #2a2a4a;border-radius:12px;
+    padding:40px;max-width:560px;width:100%}
+  a.btn{display:inline-block;padding:14px 28px;border-radius:8px;
+    background:linear-gradient(135deg,#7c6af7,#a855f7);color:#fff;
+    font-weight:600;font-size:1rem;margin-top:8px}
+</style>
+</head>
+<body>
+<div class="box">
+  <h1>&#127881; You're in!</h1>
+  <p>Your PassiveEngine subscription is active. Check your email for your
+     API key — it's your key to all content endpoints.</p>
+  <p>Share your referral link with friends: every person who subscribes
+     through your link earns you one free month.</p>
+  <a class="btn" href="/docs">View API Documentation</a>
+</div>
+</body>
+</html>"""
+
+
 @app.get("/", include_in_schema=False)
 async def root():
-    return RedirectResponse("/docs")
+    return HTMLResponse(_LANDING_HTML)
+
+
+@app.get("/success", include_in_schema=False)
+async def success():
+    return HTMLResponse(_SUCCESS_HTML)
 
 
 @app.get("/health")
@@ -174,13 +419,41 @@ class LeadIn(BaseModel):
     source: str = ""
     campaign: str = ""
     first_name: str = ""
+    referral_code: str = ""
 
 
 @app.post("/leads/capture")
 async def capture_lead(body: LeadIn):
     from automation.lead_capture import capture_lead as _capture
-    result = _capture(body.email, body.source, body.campaign, body.first_name)
+    result = _capture(body.email, body.source, body.campaign,
+                      body.first_name, body.referral_code)
     return result
+
+
+# ── Referral program ──────────────────────────────────────────────────────────
+
+@app.get("/referral")
+async def referral_stats(subscriber: Subscriber = Depends(get_subscriber)):
+    """Return the subscriber's referral link and how many credits they've earned."""
+    from core.database import Lead
+    db = SessionLocal()
+    try:
+        sub = db.query(Subscriber).filter_by(id=subscriber.id).first()
+        code = sub.referral_code or ""
+        link = f"{settings.base_url}/?ref={code}" if code else None
+        referred = db.query(Lead).filter_by(referred_by_code=code).count() if code else 0
+        converted = db.query(Lead).filter_by(
+            referred_by_code=code, converted=True
+        ).count() if code else 0
+        return {
+            "referral_link": link,
+            "referral_code": code,
+            "people_referred": referred,
+            "people_converted": converted,
+            "free_months_earned": sub.referral_credits,
+        }
+    finally:
+        db.close()
 
 
 # ── Stripe checkout ───────────────────────────────────────────────────────────

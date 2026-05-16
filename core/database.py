@@ -50,6 +50,8 @@ class Subscriber(Base):
     status = Column(Enum("active", "cancelled", "past_due", name="sub_status"), default="active")
     api_key = Column(String(64), unique=True, nullable=True, index=True)
     api_calls_this_month = Column(Integer, default=0)
+    referral_code = Column(String(16), unique=True, nullable=True, index=True)
+    referral_credits = Column(Integer, default=0)   # free months earned
     created_at = Column(DateTime(timezone=True), default=utcnow)
     renewed_at = Column(DateTime(timezone=True), nullable=True)
     orders = relationship("Order", back_populates="subscriber")
@@ -118,6 +120,7 @@ class Lead(Base):
     email = Column(String(255), nullable=False, index=True)
     source = Column(String(100), nullable=True)   # utm_source
     campaign = Column(String(100), nullable=True)
+    referred_by_code = Column(String(16), nullable=True)  # referral code of the person who invited them
     converted = Column(Boolean, default=False)
     sequence_step = Column(Integer, default=0)    # nurture email step
     created_at = Column(DateTime(timezone=True), default=utcnow)

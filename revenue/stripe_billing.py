@@ -82,8 +82,11 @@ def handle_webhook_event(event: dict) -> Optional[str]:
             sub_id = data.get("subscription")
             plan = data.get("metadata", {}).get("plan", "starter")
             _upsert_subscriber(db, email, customer_id, sub_id, plan, "active")
+            _credit_referrer(db, email)
             _record_revenue(db, "stripe_subscription",
                             PLAN_PRICES[plan], f"New {plan} sub: {email}", sub_id)
+            from automation.lead_capture import mark_lead_converted
+            mark_lead_converted(email, plan)
             return f"checkout.completed:{email}:{plan}"
 
         if etype == "invoice.paid":
@@ -136,8 +139,24 @@ def _upsert_subscriber(db, email, customer_id, sub_id, plan, status):
     sub.stripe_subscription_id = sub_id
     sub.plan = plan
     sub.status = status
+    if not sub.referral_code:
+        sub.referral_code = secrets.token_urlsafe(6)
     db.commit()
     return sub
+
+
+def _credit_referrer(db, new_subscriber_email: str):
+    """If this subscriber was referred by someone, give that person a free month credit."""
+    from core.database import Lead
+    lead = db.query(Lead).filter_by(email=new_subscriber_email).first()
+    if not lead or not lead.referred_by_code:
+        return
+    referrer = db.query(Subscriber).filter_by(
+        referral_code=lead.referred_by_code
+    ).first()
+    if referrer:
+        referrer.referral_credits += 1
+        db.commit()
 
 
 def _record_revenue(db, source, amount, description, external_id=None):

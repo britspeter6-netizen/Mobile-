@@ -7,7 +7,7 @@ from channels.email_sender import add_lead_and_start_sequence
 
 
 def capture_lead(email: str, source: str = "", campaign: str = "",
-                 first_name: str = "") -> dict:
+                 first_name: str = "", referral_code: str = "") -> dict:
     """
     Idempotent lead capture.
     Returns status and whether this is a new lead.
@@ -19,6 +19,9 @@ def capture_lead(email: str, source: str = "", campaign: str = "",
             return {"status": "existing", "lead_id": existing.id}
 
         lead = add_lead_and_start_sequence(email, source, campaign)
+        if referral_code:
+            lead.referred_by_code = referral_code
+            db.commit()
         return {"status": "new", "lead_id": lead.id}
     finally:
         db.close()
